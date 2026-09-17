@@ -1,0 +1,30 @@
+# Node.js / Next.js
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env*.local
+
+# Python / Virtualenv
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+backend/__pycache__/
+backend/*/__pycache__/
+backend/*/*/__pycache__/
+
+# Qdrant & Temp artifacts
+backend/qdrant_data/
+qdrant_data/
+nitrous_artifacts/
+*.log
+
+# OS / Editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
