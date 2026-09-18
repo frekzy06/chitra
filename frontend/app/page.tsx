@@ -21,6 +21,8 @@ export default function Home() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [modelMode, setModelMode] = useState<'offline' | 'online'>('offline');
+
 
   const [config, setConfig] = useState<TransformationConfig>({
     tone: 'Executive Briefing',
@@ -99,6 +101,15 @@ export default function Home() {
     setSelectedDoc(doc);
   };
 
+  // Handle model mode switch (Cancels processing if ongoing)
+  const handleModelModeChange = (newMode: 'offline' | 'online') => {
+    if (isProcessing) {
+      cancelProcessing('Synthesis cancelled because model mode was switched.');
+    }
+    setModelMode(newMode);
+  };
+
+
   // Trigger transformation pipeline
   const handleStartSynthesis = async (rawPrompt?: string) => {
     if (!selectedDoc && !rawPrompt) return;
@@ -128,11 +139,13 @@ export default function Home() {
       if (rawPrompt) {
         formData.append('prompt_text', rawPrompt);
       }
+      formData.append('model_mode', modelMode);
       formData.append('document_type', config.documentType);
       formData.append('tone', config.tone);
       formData.append('target_audience', config.targetAudience);
       formData.append('classification_tier', config.classificationTier);
       formData.append('deliverable_formats', config.deliverableFormats.join(','));
+
 
       const t2 = setTimeout(() => {
         if (!controller.signal.aborted) setPipelineStage(3);
@@ -307,7 +320,13 @@ export default function Home() {
     <main className="min-h-screen bg-[#FCE4E4] flex flex-col justify-between selection:bg-[#5E2E36] selection:text-white">
       
       {/* Top Header Bar */}
-      <Header onOpenInfo={() => setIsInfoOpen(true)} />
+      <Header
+        onOpenInfo={() => setIsInfoOpen(true)}
+        modelMode={modelMode}
+        onModelModeChange={handleModelModeChange}
+      />
+
+
 
       {/* Main Content Area - Stretched to Wide Screen & Proportional Layout */}
       <div className="flex-1 w-full max-w-[95vw] xl:max-w-[1440px] 2xl:max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-28 sm:pb-36 lg:pb-44 space-y-8">

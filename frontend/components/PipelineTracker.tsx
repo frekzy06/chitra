@@ -93,7 +93,7 @@ export const PipelineTracker: React.FC<PipelineTrackerProps> = ({
             </p>
           </div>
 
-          {/* Time Predictor / Completion Badge & Interactive Cancel Button */}
+          {/* Completion Badge or Interactive Cancel Button */}
           <div className="flex items-center space-x-2.5">
             {currentStage === 5 ? (
               <div className="px-3.5 py-1.5 rounded-xl bg-rose-50/80 border border-[#7A3E48]/30 text-[#7A3E48] font-bold text-xs flex items-center space-x-1.5 shadow-xs">
@@ -101,28 +101,21 @@ export const PipelineTracker: React.FC<PipelineTrackerProps> = ({
                 <span>Completed in {finalTime || '4.2'} seconds</span>
               </div>
             ) : (
-              <div className="flex items-center space-x-2.5">
-                <div className="px-3.5 py-1.5 rounded-xl bg-rose-50/80 border border-[#7A3E48]/30 text-[#7A3E48] font-bold text-xs flex items-center space-x-1.5 shadow-xs">
-                  <Clock className="w-3.5 h-3.5 text-[#7A3E48]" />
-                  <span>Predicted: ~{estimatedTimeSec}s ({remainingSeconds}s remaining)</span>
-                </div>
-
-                {onCancel && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onCancel();
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 active:scale-95 text-[#7A3E48] text-xs font-bold border border-[#7A3E48] ring-1 ring-inset ring-[#7A3E48]/20 transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
-                    title="Cancel processing"
-                  >
-                    <XCircle className="w-4 h-4 text-[#7A3E48]" />
-                    <span>Cancel</span>
-                  </button>
-                )}
-              </div>
+              onCancel && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onCancel();
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 active:scale-95 text-[#7A3E48] text-xs font-bold border border-[#7A3E48] ring-1 ring-inset ring-[#7A3E48]/20 transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                  title="Cancel processing"
+                >
+                  <XCircle className="w-4 h-4 text-[#7A3E48]" />
+                  <span>Cancel</span>
+                </button>
+              )
             )}
           </div>
         </div>

@@ -15,11 +15,8 @@
 
 ## Change Log
 - **2026-09-18:**
-  - Standardized all window containers to `#FFDEDE` with `#5E2E36` borders across Upload, Execution, Carousel, and Artifact Results.
-  - Aligned all windows to a unified `max-w-5xl mx-auto` container with proportional vertical height.
-  - Removed logo next to "Executing Synthesis" in the execution window.
-  - Made the Radix progress bar stroke-free and borderless.
-  - Simplified empty upload document state to only display the upload logo and "Upload a file".
-  - Fixed cancel button in synthesis execution to immediately stop processing and abort requests cleanly.
-  - Updated typography to black/dark charcoal (`text-slate-950`), following Geist, Manrope, Poppins, and Fraunces fonts.
-  - Updated `Rules.md`, `front.md`, `fact.md`, and `brain.md`.
+  - Added clean Offline / Online Model toggle button in the Header navigation bar next to CHITRA (no icons, matching segmented pill aesthetic).
+  - Integrated Google Gemini online models backend (`google-genai`) with automatic model-level fallback cascading (`gemini-3.5-flash` -> `gemini-3.5-flash-lite` -> `gemini-3.6-flash` -> `gemini-flash-latest`) when demand spikes or rate limits occur.
+  - Implemented strict offline availability verification (clean error if offline mode is selected and local Ollama is not reachable).
+  - Wired `model_mode` through API requests, `/api/v1/health` status reporting, and deliverable artifact metadata badges.
+

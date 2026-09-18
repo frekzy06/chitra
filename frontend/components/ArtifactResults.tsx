@@ -71,6 +71,8 @@ interface ArtifactResultsProps {
     infographic?: InfographicData | null;
     social_posts?: SocialPosts | null;
     processing_time_seconds?: number;
+    model_used?: string | null;
+    model_mode?: string | null;
   };
   onPreviewSlides: () => void;
   onPreviewAdvisory?: () => void;
@@ -122,10 +124,15 @@ export const ArtifactResults: React.FC<ArtifactResultsProps> = ({
         {/* Header Strip */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#7A3E48]/20">
           <div>
-            <div className="flex items-center space-x-2 mb-1.5">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <span className="px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-50/80 text-emerald-800 border border-[#7A3E48]/30 shadow-xs">
                 Synthesis Complete
               </span>
+              {data.model_used && (
+                <span className="px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-50/80 text-[#7A3E48] border border-[#7A3E48]/30 shadow-xs">
+                  {data.model_mode === 'online' ? `Online: ${data.model_used}` : `Offline: ${data.model_used}`}
+                </span>
+              )}
               <span className="text-xs text-[#7A3E48] font-mono font-extrabold">
                 {data.classification_tier}
               </span>

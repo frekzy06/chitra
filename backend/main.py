@@ -16,7 +16,7 @@ from api.schemas import (
 )
 from services.parser import extract_text_from_file
 from services.vector_store import LocalVectorMemory
-from services.llm_engine import AirGappedBrain
+from services.llm_engine import HybridBrain
 from services.generators.pptx_generator import PPTXPrintingPress
 from services.generators.pdf_generator import PDFPrintingPress
 
@@ -34,29 +34,39 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# Initialize offline services
+# Initialize services
 ARTIFACT_DIR = os.getenv("ARTIFACT_DIR", "/tmp/nitrous_artifacts")
 os.makedirs(ARTIFACT_DIR, exist_ok=True)
 
 memory = LocalVectorMemory()
-brain = AirGappedBrain()
+brain = HybridBrain()
 pptx_press = PPTXPrintingPress()
 pdf_press = PDFPrintingPress()
 
 @app.get("/api/v1/health")
 async def health_check():
+    ollama_ok = brain.offline_brain.is_available()
+    gemini_ok = brain.online_brain.is_available()
     return {
         "status": "healthy",
         "engine": "NITROUS ENGINE (CHITRA)",
-        "air_gapped": True,
-        "active_model": brain.model,
-        "ollama_endpoint": brain.base_url
+        "offline_llm": {
+            "available": ollama_ok,
+            "model": brain.offline_brain.model,
+            "endpoint": brain.offline_brain.base_url
+        },
+        "online_llm": {
+            "available": gemini_ok,
+            "model": brain.online_brain.last_used_model,
+            "models_chain": brain.online_brain.text_models
+        }
     }
 
 @app.post("/api/v1/transform", response_model=TransformResponse)
 async def transform_document(
     file: Optional[UploadFile] = File(None),
     prompt_text: Optional[str] = Form(None),
+    model_mode: str = Form("offline"),
     document_type: str = Form("Auto-Detect"),
     tone: str = Form("Executive Briefing"),
     target_audience: str = Form("Common Public"),
@@ -83,8 +93,10 @@ async def transform_document(
         if not context_text:
             context_text = "Security advisory: Perimeter network gateways require firmware verification and access credential rotation."
 
+        active_brain = brain.get_brain(model_mode)
+
         # Document type reasoning & classification
-        doc_analysis = brain.analyze_document_type(context_text, document_type)
+        doc_analysis = active_brain.analyze_document_type(context_text, document_type)
 
         # Parse requested deliverables
         formats_list = [f.strip().lower() for f in deliverable_formats.split(",")]
@@ -101,7 +113,7 @@ async def transform_document(
 
         # 1. Presentation Deck with Speaker Notes
         if generate_all or "presentation" in formats_list or "pptx" in formats_list:
-            deck_structure = brain.generate_presentation_structure(
+            deck_structure = active_brain.generate_presentation_structure(
                 context_text=context_text,
                 tone=tone,
                 target_audience=target_audience,
@@ -115,7 +127,7 @@ async def transform_document(
 
         # 2. Security Advisory PDF
         if generate_all or "advisory" in formats_list or "pdf" in formats_list:
-            advisory_structure = brain.generate_advisory_structure(
+            advisory_structure = active_brain.generate_advisory_structure(
                 context_text=context_text,
                 classification_tier=classification_tier,
                 doc_type=doc_analysis.detected_type
@@ -127,20 +139,20 @@ async def transform_document(
 
         # 3. Executive Summary
         if generate_all or "executive_summary" in formats_list:
-            exec_summary = brain.generate_executive_summary(
+            exec_summary = active_brain.generate_executive_summary(
                 context_text=context_text,
                 tone=tone
             )
 
         # 4. Infographic Content
         if generate_all or "infographic" in formats_list or "visual" in formats_list:
-            infographic_data = brain.generate_infographic_data(
+            infographic_data = active_brain.generate_infographic_data(
                 context_text=context_text
             )
 
         # 5. Social Posts (LinkedIn & Twitter/X)
         if generate_all or "linkedin" in formats_list or "twitter" in formats_list or "social_text" in formats_list:
-            social_posts = brain.generate_social_posts(
+            social_posts = active_brain.generate_social_posts(
                 context_text=context_text,
                 target_audience=target_audience
             )
@@ -151,6 +163,7 @@ async def transform_document(
             else (exec_summary.title if exec_summary
             else (advisory_structure.title if advisory_structure else base_name))
         )
+        model_name = brain.get_active_model_name(model_mode)
 
         return TransformResponse(
             status="success",
@@ -165,11 +178,18 @@ async def transform_document(
             infographic=infographic_data,
             social_posts=social_posts,
             analysis_metadata=doc_analysis,
-            processing_time_seconds=elapsed
+            processing_time_seconds=elapsed,
+            model_used=model_name,
+            model_mode=model_mode
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Transformation error: {str(e)}")
+        err_msg = str(e)
+        if not err_msg.startswith("Error:"):
+            err_msg = f"Error: {err_msg}"
+        status_code = 503 if "not reachable" in err_msg or "Ollama" in err_msg else 500
+        raise HTTPException(status_code=status_code, detail=err_msg)
+
 
 @app.get("/api/v1/download/{filename}")
 async def download_artifact(filename: str):

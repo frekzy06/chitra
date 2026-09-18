@@ -252,3 +252,6 @@ class TransformResponse(BaseModel):
     social_posts: Optional[SocialPostsSchema] = None
     analysis_metadata: Optional[DocumentAnalysisMetadata] = None
     processing_time_seconds: Optional[float] = None
+    model_used: Optional[str] = None
+    model_mode: Optional[str] = None
+

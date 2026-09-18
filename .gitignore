@@ -17,8 +17,17 @@ backend/__pycache__/
 backend/*/__pycache__/
 backend/*/*/__pycache__/
 
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
 # Qdrant & Temp artifacts
 backend/qdrant_data/
+
 qdrant_data/
 nitrous_artifacts/
 *.log
