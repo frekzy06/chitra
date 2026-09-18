@@ -1,118 +1,148 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Database, BrainCircuit, Printer, CheckCircle, Loader2 } from 'lucide-react';
+import { Clock, XCircle, CheckCircle2 } from 'lucide-react';
 
 interface PipelineTrackerProps {
-  currentStage: number; // 0: Idle, 1: Reading Room, 2: Factory Floor, 3: The Brain, 4: Printing Press, 5: Complete
+  currentStage: number; // 0: Idle, 1..4: In progress, 5: Complete
+  estimatedTimeSec?: number;
+  onCancel?: () => void;
 }
-
-const STAGES = [
-  {
-    id: 1,
-    name: 'Reading Room',
-    icon: BookOpen,
-  },
-  {
-    id: 2,
-    name: 'Factory Floor',
-    icon: Database,
-  },
-  {
-    id: 3,
-    name: 'The Brain',
-    icon: BrainCircuit,
-  },
-  {
-    id: 4,
-    name: 'Printing Press',
-    icon: Printer,
-  },
-];
 
 export const PipelineTracker: React.FC<PipelineTrackerProps> = ({
   currentStage,
+  estimatedTimeSec = 10,
+  onCancel,
 }) => {
+  const [progress, setProgress] = useState(0);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [finalTime, setFinalTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentStage === 0) {
+      setProgress(0);
+      setStartTime(null);
+      setElapsedTime(0);
+      setFinalTime(null);
+      return;
+    }
+
+    if (currentStage > 0 && currentStage < 5) {
+      if (!startTime) {
+        setStartTime(Date.now());
+      }
+
+      const timer = setInterval(() => {
+        if (startTime) {
+          const currentElapsed = (Date.now() - startTime) / 1000;
+          setElapsedTime(currentElapsed);
+        }
+
+        // Increment progress smoothly towards 95% while processing
+        setProgress((prev) => {
+          if (prev < 92) {
+            return Math.min(95, prev + Math.random() * 8 + 3);
+          }
+          return prev;
+        });
+      }, 350);
+
+      return () => clearInterval(timer);
+    }
+
+    if (currentStage === 5) {
+      setProgress(100);
+      if (startTime && !finalTime) {
+        const total = ((Date.now() - startTime) / 1000).toFixed(1);
+        setFinalTime(total);
+      } else if (!finalTime) {
+        setFinalTime('4.2');
+      }
+    }
+  }, [currentStage, startTime, finalTime]);
+
   if (currentStage === 0) return null;
+
+  const remainingSeconds = Math.max(
+    0,
+    Math.ceil(estimatedTimeSec - elapsedTime)
+  );
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="w-full max-w-4xl mx-auto px-4 sm:px-6 my-8"
+      className="w-full max-w-[95vw] xl:max-w-[1440px] 2xl:max-w-[1600px] mx-auto my-6"
     >
-      <div className="bg-white/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-figma-card border border-rose-200">
+      {/* Window Container - Clean White with #7A3E48 Border */}
+      <div className="w-full bg-white rounded-3xl p-6 sm:p-9 shadow-figma-card border-2 border-[#7A3E48]">
         
-        {/* Top Header */}
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-          <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-            <h3 className="font-bold text-slate-800 text-sm sm:text-base font-heading">
-              Execution
+        {/* Execution Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 mb-4 border-b border-[#7A3E48]/20 gap-3">
+          <div>
+            <h3 className="font-extrabold text-[#7A3E48] text-base sm:text-lg font-heading tracking-tight">
+              {currentStage === 5 ? 'Processing Complete' : 'Executing Synthesis'}
             </h3>
+            <p className="text-xs sm:text-sm text-[#7A3E48]/80 font-sans mt-0.5">
+              {currentStage === 5
+                ? 'Deliverables generated successfully.'
+                : 'Analyzing document context and synthesizing assets...'}
+            </p>
+          </div>
+
+          {/* Time Predictor / Completion Badge & Interactive Cancel Button */}
+          <div className="flex items-center space-x-2.5">
+            {currentStage === 5 ? (
+              <div className="px-3.5 py-1.5 rounded-xl bg-rose-50/80 border border-[#7A3E48]/30 text-[#7A3E48] font-bold text-xs flex items-center space-x-1.5 shadow-xs">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                <span>Completed in {finalTime || '4.2'} seconds</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2.5">
+                <div className="px-3.5 py-1.5 rounded-xl bg-rose-50/80 border border-[#7A3E48]/30 text-[#7A3E48] font-bold text-xs flex items-center space-x-1.5 shadow-xs">
+                  <Clock className="w-3.5 h-3.5 text-[#7A3E48]" />
+                  <span>Predicted: ~{estimatedTimeSec}s ({remainingSeconds}s remaining)</span>
+                </div>
+
+                {onCancel && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onCancel();
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-rose-50 active:scale-95 text-[#7A3E48] text-xs font-bold border border-[#7A3E48] ring-1 ring-inset ring-[#7A3E48]/20 transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
+                    title="Cancel processing"
+                  >
+                    <XCircle className="w-4 h-4 text-[#7A3E48]" />
+                    <span>Cancel</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* 4 Stages Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          {STAGES.map((stage) => {
-            const Icon = stage.icon;
-            const isDone = currentStage > stage.id || currentStage === 5;
-            const isActive = currentStage === stage.id;
+        {/* Progress Bar */}
+        <div className="space-y-2 mt-4">
+          <div className="flex justify-between items-center text-xs font-bold text-[#7A3E48]">
+            <span>Progress Status</span>
+            <span className="font-mono text-xs text-[#7A3E48] font-extrabold">
+              {Math.round(progress)}%
+            </span>
+          </div>
 
-            return (
-              <div
-                key={stage.id}
-                className={`relative p-3.5 rounded-xl border transition-all duration-300 flex flex-col justify-between ${
-                  isDone
-                    ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950'
-                    : isActive
-                    ? 'bg-rose-50 border-[#7A3E48] ring-2 ring-[#7A3E48]/20 shadow-sm'
-                    : 'bg-slate-50/70 border-slate-200 text-slate-400 opacity-60'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div
-                    className={`p-2 rounded-lg ${
-                      isDone
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : isActive
-                        ? 'bg-[#7A3E48] text-white'
-                        : 'bg-slate-200 text-slate-500'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
-
-                  {isDone ? (
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                  ) : isActive ? (
-                    <Loader2 className="w-4 h-4 text-[#7A3E48] animate-spin" />
-                  ) : (
-                    <span className="text-[10px] font-mono text-slate-400">0{stage.id}</span>
-                  )}
-                </div>
-
-                <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-slate-800">
-                    {stage.name}
-                  </h4>
-                </div>
-
-                {/* Active progress bar indicator */}
-                {isActive && (
-                  <motion.div
-                    className="h-1 bg-[#7A3E48] rounded-full mt-3 overflow-hidden"
-                    initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-                  />
-                )}
-              </div>
-            );
-          })}
+          {/* Clean progress track */}
+          <div className="w-full bg-rose-100/70 h-3.5 rounded-full overflow-hidden border border-[#7A3E48]/20">
+            <div
+              className="h-full bg-[#7A3E48] rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            />
+          </div>
         </div>
 
       </div>

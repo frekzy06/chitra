@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sliders, Shield, Users, Mic, FileCode2 } from 'lucide-react';
+import { X, Sliders, Shield, Users, Mic, Layers, FileType } from 'lucide-react';
 
 export interface TransformationConfig {
   tone: string;
   targetAudience: string;
   classificationTier: string;
-  deliverableFormat: string;
+  documentType: string;
+  deliverableFormats: string[]; // e.g. ['presentation', 'advisory', 'executive_summary', 'infographic', 'linkedin', 'twitter', 'visual']
 }
 
 interface ConfigDrawerProps {
@@ -18,17 +19,58 @@ interface ConfigDrawerProps {
   onChangeConfig: (newConfig: TransformationConfig) => void;
 }
 
+const AVAILABLE_FORMATS = [
+  { id: 'presentation', label: 'Presentation (Slides + Notes)' },
+  { id: 'advisory', label: 'Security Advisory (PDF)' },
+  { id: 'executive_summary', label: 'Executive Summary' },
+  { id: 'infographic', label: 'Infographic & Metrics' },
+  { id: 'linkedin', label: 'LinkedIn Post' },
+  { id: 'twitter', label: 'Twitter / X Post' },
+  { id: 'visual', label: 'Threat Visual Graphic' },
+];
+
+const DOCUMENT_TYPES = [
+  'Auto-Detect (AI)',
+  'News Article',
+  'Security Advisory',
+  'Threat Intelligence',
+  'Policy Document',
+  'Research Paper',
+  'Incident Report',
+  'Announcement',
+  'Free-form Prompt',
+];
+
 export const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
   isOpen,
   onClose,
   config,
   onChangeConfig,
 }) => {
+  const toggleFormat = (id: string) => {
+    const exists = config.deliverableFormats.includes(id);
+    let updated: string[];
+    if (exists) {
+      updated = config.deliverableFormats.filter((f) => f !== id);
+      if (updated.length === 0) updated = [id]; // Keep at least one
+    } else {
+      updated = [...config.deliverableFormats, id];
+    }
+    onChangeConfig({ ...config, deliverableFormats: updated });
+  };
+
+  const handleSelectAllFormats = () => {
+    if (config.deliverableFormats.length === AVAILABLE_FORMATS.length) {
+      onChangeConfig({ ...config, deliverableFormats: ['presentation'] });
+    } else {
+      onChangeConfig({ ...config, deliverableFormats: AVAILABLE_FORMATS.map((f) => f.id) });
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -37,7 +79,6 @@ export const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
           />
 
-          {/* Drawer Sidebar */}
           <motion.aside
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -48,15 +89,15 @@ export const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
             <div>
               {/* Header */}
               <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 rounded-lg bg-rose-50 text-[#7A3E48]">
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-2 rounded-xl bg-rose-50 text-[#7A3E48]">
                     <Sliders className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-800 font-heading">
-                      Intelligence Parameters
+                    <h3 className="text-base font-bold text-slate-900 font-heading">
+                      Parameters
                     </h3>
-                    <p className="text-xs text-slate-500">Fine-tune the generative synthesis target</p>
+                    <p className="text-xs text-slate-500">Fine-tune generation targets</p>
                   </div>
                 </div>
 
@@ -68,33 +109,92 @@ export const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                 </button>
               </div>
 
-              {/* Form Options */}
-              <div className="mt-6 space-y-6">
+              <div className="mt-5 space-y-5">
                 
-                {/* Tone Option */}
+                {/* Deliverable Outputs (Multi-select) */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="flex items-center space-x-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      <Layers className="w-4 h-4 text-[#7A3E48]" />
+                      <span>Deliverables ({config.deliverableFormats.length})</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleSelectAllFormats}
+                      className="text-xs text-[#7A3E48] font-bold hover:underline"
+                    >
+                      {config.deliverableFormats.length === AVAILABLE_FORMATS.length ? 'Reset' : 'Select All'}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {AVAILABLE_FORMATS.map((fmt) => {
+                      const isSelected = config.deliverableFormats.includes(fmt.id);
+                      return (
+                        <button
+                          key={fmt.id}
+                          type="button"
+                          onClick={() => toggleFormat(fmt.id)}
+                          className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                            isSelected
+                              ? 'border-[#7A3E48] bg-rose-50/80 text-[#7A3E48] font-bold shadow-xs'
+                              : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          <span>{fmt.label}</span>
+                          <span
+                            className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[10px] ${
+                              isSelected
+                                ? 'bg-[#7A3E48] text-white border-[#7A3E48]'
+                                : 'border-slate-300 bg-white'
+                            }`}
+                          >
+                            {isSelected && '✓'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Document Type */}
+                <div>
+                  <label className="flex items-center space-x-2 text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    <FileType className="w-4 h-4 text-[#7A3E48]" />
+                    <span>Document Type</span>
+                  </label>
+                  <select
+                    value={config.documentType}
+                    onChange={(e) => onChangeConfig({ ...config, documentType: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7A3E48]"
+                  >
+                    {DOCUMENT_TYPES.map((dt) => (
+                      <option key={dt} value={dt}>
+                        {dt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Briefing Tone */}
                 <div>
                   <label className="flex items-center space-x-2 text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     <Mic className="w-4 h-4 text-[#7A3E48]" />
-                    <span>Briefing Tone</span>
+                    <span>Tone</span>
                   </label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {[
-                      { id: 'Executive Briefing', desc: 'High-level strategic takeaway for decision makers' },
-                      { id: 'Technical Analysis', desc: 'Detailed IoCs, CVEs, and deep remediation vectors' },
-                      { id: 'Public Alert', desc: 'Clear, actionable language for broad distribution' },
-                    ].map((item) => (
+                  <div className="grid grid-cols-2 gap-2">
+                    {['Executive Briefing', 'Technical Analysis', 'Public Alert', 'Plain Language'].map((t) => (
                       <button
-                        key={item.id}
+                        key={t}
                         type="button"
-                        onClick={() => onChangeConfig({ ...config, tone: item.id })}
-                        className={`text-left p-3 rounded-xl border transition-all ${
-                          config.tone === item.id
-                            ? 'border-[#7A3E48] bg-rose-50/70 ring-2 ring-[#7A3E48]/20'
-                            : 'border-slate-200 hover:border-slate-300'
+                        onClick={() => onChangeConfig({ ...config, tone: t })}
+                        className={`p-2 rounded-xl text-xs font-semibold border text-center transition-all ${
+                          config.tone === t
+                            ? 'border-[#7A3E48] bg-rose-50 text-[#7A3E48] font-bold'
+                            : 'border-slate-200 text-slate-600 hover:border-slate-300'
                         }`}
                       >
-                        <div className="text-sm font-semibold text-slate-900">{item.id}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">{item.desc}</div>
+                        {t}
                       </button>
                     ))}
                   </div>
@@ -109,12 +209,13 @@ export const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                   <select
                     value={config.targetAudience}
                     onChange={(e) => onChangeConfig({ ...config, targetAudience: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7A3E48]"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7A3E48]"
                   >
                     <option value="Common Public">Common Public</option>
                     <option value="Educated People">Educated People</option>
                     <option value="Kids">Kids</option>
                     <option value="GenZ">GenZ</option>
+                    <option value="Leadership / Executives">Leadership / Executives</option>
                   </select>
                 </div>
 
@@ -122,7 +223,7 @@ export const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                 <div>
                   <label className="flex items-center space-x-2 text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     <Shield className="w-4 h-4 text-[#7A3E48]" />
-                    <span>Classification Tier</span>
+                    <span>Classification</span>
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {['RESTRICTED', 'CONFIDENTIAL', 'PUBLIC'].map((tier) => (
@@ -130,11 +231,11 @@ export const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                         key={tier}
                         type="button"
                         onClick={() => onChangeConfig({ ...config, classificationTier: tier })}
-                        className={`py-2 rounded-lg text-xs font-bold transition-all border ${
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${
                           config.classificationTier === tier
                             ? tier === 'RESTRICTED'
-                              ? 'bg-red-600 text-white border-red-700 shadow-sm'
-                              : 'bg-indigo-600 text-white border-indigo-700 shadow-sm'
+                              ? 'bg-red-600 text-white border-red-700'
+                              : 'bg-indigo-600 text-white border-indigo-700'
                             : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
                         }`}
                       >
@@ -144,46 +245,17 @@ export const ConfigDrawer: React.FC<ConfigDrawerProps> = ({
                   </div>
                 </div>
 
-                {/* Deliverable Outputs */}
-                <div>
-                  <label className="flex items-center space-x-2 text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    <FileCode2 className="w-4 h-4 text-[#7A3E48]" />
-                    <span>Deliverable Formats</span>
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'all', label: 'All Formats' },
-                      { id: 'social_text', label: 'Social Text (Insta, LinkedIn, Twitter)' },
-                      { id: 'pptx', label: 'Slide Deck (.pptx)' },
-                      { id: 'pdf', label: 'Advisory (.pdf)' },
-                    ].map((fmt) => (
-                      <button
-                        key={fmt.id}
-                        type="button"
-                        onClick={() => onChangeConfig({ ...config, deliverableFormat: fmt.id })}
-                        className={`py-2 px-2 text-center rounded-lg text-xs font-semibold transition-all border ${
-                          config.deliverableFormat === fmt.id
-                            ? 'bg-[#7A3E48] text-white border-[#5E2E36] shadow-sm'
-                            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                        }`}
-                      >
-                        {fmt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
               </div>
             </div>
 
             {/* Apply & Close */}
-            <div className="pt-6 border-t border-slate-100">
+            <div className="pt-5 border-t border-slate-100">
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-3 rounded-xl bg-[#7A3E48] hover:bg-[#5E2E36] text-white font-bold text-sm shadow-md transition-all"
+                className="w-full py-2.5 rounded-xl bg-[#7A3E48] hover:bg-[#5E2E36] text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
               >
-                Save & Apply Settings
+                Apply Parameters
               </button>
             </div>
           </motion.aside>

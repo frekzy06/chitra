@@ -10,7 +10,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onOpenInfo }) => {
   return (
     <header className="w-full bg-[#7A3E48] text-white shadow-md relative z-30 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
         
         {/* Left spacer for symmetry */}
         <div className="w-8" />

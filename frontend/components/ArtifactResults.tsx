@@ -2,13 +2,59 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Presentation, FileText, Download, Eye, Copy, Check, Sparkles, Instagram, Linkedin, Twitter, Share2 } from 'lucide-react';
+import {
+  Presentation,
+  FileText,
+  Download,
+  Eye,
+  Copy,
+  Check,
+  Linkedin,
+  Twitter,
+  BarChart3,
+  Image as ImageIcon,
+  Briefcase,
+  Code
+} from 'lucide-react';
 import { downloadPdfAdvisory, downloadPptxDeck } from '@/utils/downloadHelper';
 
 interface SocialPosts {
-  instagram?: string;
   linkedin?: string;
   twitter?: string;
+}
+
+interface InfographicMetric {
+  label: string;
+  value: string;
+  context?: string;
+}
+
+interface InfographicSection {
+  step_number: number;
+  title: string;
+  description: string;
+}
+
+interface InfographicData {
+  headline: string;
+  summary: string;
+  metrics: InfographicMetric[];
+  sections: InfographicSection[];
+  layout_recommendation?: string;
+  key_message?: string;
+  call_to_action?: string;
+  svg_code?: string;
+  image_prompt?: string;
+}
+
+interface ExecutiveSummaryData {
+  title: string;
+  headline: string;
+  strategic_context: string;
+  operational_impact: string;
+  key_findings: string[];
+  recommendations: string[];
+  next_steps: string[];
 }
 
 interface ArtifactResultsProps {
@@ -21,6 +67,8 @@ interface ArtifactResultsProps {
     pdf_download_url?: string | null;
     deck_structure?: any;
     advisory_structure?: any;
+    executive_summary?: ExecutiveSummaryData | null;
+    infographic?: InfographicData | null;
     social_posts?: SocialPosts | null;
     processing_time_seconds?: number;
   };
@@ -33,20 +81,12 @@ export const ArtifactResults: React.FC<ArtifactResultsProps> = ({
   onPreviewSlides,
   onPreviewAdvisory,
 }) => {
-  const [copiedSummary, setCopiedSummary] = useState(false);
-  const [copiedSocial, setCopiedSocial] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const handleCopySummary = () => {
-    const summary = data.deck_structure?.summary_takeaway || data.advisory_structure?.threat_overview || data.title;
-    navigator.clipboard.writeText(summary);
-    setCopiedSummary(true);
-    setTimeout(() => setCopiedSummary(false), 2000);
-  };
-
-  const handleCopyText = (text: string, key: string) => {
+  const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedSocial(key);
-    setTimeout(() => setCopiedSocial(null), 2000);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
 
   const handleDownloadPdf = () => {
@@ -57,90 +97,143 @@ export const ArtifactResults: React.FC<ArtifactResultsProps> = ({
     downloadPptxDeck(data.title, data.pptx_download_url);
   };
 
+  const handleDownloadSvg = () => {
+    if (!data.infographic?.svg_code) return;
+    const blob = new Blob([data.infographic.svg_code], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `threat_infographic_${Date.now()}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <motion.section
+      id="artifact-results-section"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto px-4 sm:px-6 my-10"
+      className="w-full max-w-[95vw] xl:max-w-[1440px] 2xl:max-w-[1600px] mx-auto my-8"
     >
-      {/* Container Card */}
-      <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-figma-card border border-rose-200">
+      <div className="bg-white rounded-3xl p-6 sm:p-9 lg:p-10 shadow-figma-card border-2 border-[#7A3E48]">
         
-        {/* Title Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+        {/* Header Strip */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#7A3E48]/20">
           <div>
-            <div className="flex items-center space-x-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
-                Ready
+            <div className="flex items-center space-x-2 mb-1.5">
+              <span className="px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-50/80 text-emerald-800 border border-[#7A3E48]/30 shadow-xs">
+                Synthesis Complete
+              </span>
+              <span className="text-xs text-[#7A3E48] font-mono font-extrabold">
+                {data.classification_tier}
               </span>
             </div>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-heading">
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-[#7A3E48] font-heading">
               {data.title}
             </h3>
           </div>
         </div>
 
-        {/* Executive Takeaway Summary Strip */}
-        {data.deck_structure?.summary_takeaway && (
-          <div className="my-5 p-4 rounded-2xl bg-rose-50/70 border border-rose-200/80 flex items-start justify-between gap-3">
-            <div className="flex items-start space-x-3">
-              <Sparkles className="w-5 h-5 text-[#7A3E48] shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-[#7A3E48] uppercase tracking-wider">Summary Overview</h4>
-                <p className="text-sm text-slate-700 mt-0.5 leading-relaxed">
-                  {data.deck_structure.summary_takeaway}
-                </p>
+        {/* Executive Summary */}
+        {data.executive_summary && (
+          <div className="my-6 p-6 sm:p-7 rounded-2xl bg-[#FDF8F8] border-2 border-[#7A3E48]/25 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-[#7A3E48]/20 mb-3">
+              <div className="flex items-center space-x-2 text-[#7A3E48] font-extrabold text-sm">
+                <Briefcase className="w-4 h-4 text-[#7A3E48]" />
+                <span>Executive Summary</span>
               </div>
+              <button
+                onClick={() =>
+                  handleCopy(
+                    `${data.executive_summary?.headline}\n\n${data.executive_summary?.strategic_context}\n\nKey Findings:\n${data.executive_summary?.key_findings.map((f) => `• ${f}`).join('\n')}`,
+                    'exec'
+                  )
+                }
+                className="flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-white border border-[#7A3E48] ring-1 ring-inset ring-[#7A3E48]/20 text-xs font-bold text-[#7A3E48] hover:bg-rose-50 transition-colors shadow-xs"
+              >
+                {copiedKey === 'exec' ? <Check className="w-3.5 h-3.5 text-emerald-800" /> : <Copy className="w-3.5 h-3.5 text-[#7A3E48]" />}
+                <span>{copiedKey === 'exec' ? 'Copied' : 'Copy'}</span>
+              </button>
             </div>
 
-            <button
-              onClick={handleCopySummary}
-              className="p-1.5 rounded-lg bg-white hover:bg-rose-100 text-slate-600 transition-colors shadow-sm shrink-0"
-              title="Copy Summary"
-            >
-              {copiedSummary ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-            </button>
+            <h4 className="text-base font-extrabold text-[#7A3E48] mb-2">
+              {data.executive_summary.headline}
+            </h4>
+            <p className="text-xs sm:text-sm text-[#7A3E48]/90 leading-relaxed mb-4">
+              {data.executive_summary.strategic_context}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 pt-3 border-t border-[#7A3E48]/20">
+              <div>
+                <span className="text-xs font-extrabold text-[#7A3E48] uppercase tracking-wider block mb-2 font-heading">
+                  Key Findings
+                </span>
+                <ul className="space-y-2">
+                  {data.executive_summary.key_findings.map((finding, idx) => (
+                    <li key={idx} className="text-xs sm:text-sm text-[#7A3E48] flex items-start space-x-2">
+                      <span className="text-[#7A3E48] font-bold">▸</span>
+                      <span>{finding}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <span className="text-xs font-extrabold text-[#7A3E48] uppercase tracking-wider block mb-2 font-heading">
+                  Recommended Actions
+                </span>
+                <ul className="space-y-2">
+                  {data.executive_summary.recommendations.map((rec, idx) => (
+                    <li key={idx} className="text-xs sm:text-sm text-[#7A3E48] flex items-start space-x-2">
+                      <span className="text-emerald-700 font-bold">✓</span>
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Artifact Cards Grid (PPTX + PDF) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+        {/* Presentation & Advisory Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 my-6">
           
-          {/* PPTX Presentation Card */}
           {data.deck_structure && (
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="bg-[#FDF8F8] border-2 border-[#7A3E48]/25 rounded-2xl p-6 flex flex-col justify-between hover:border-[#7A3E48] hover:shadow-md transition-all">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-indigo-100 text-indigo-700">
-                    <Presentation className="w-6 h-6" />
+                  <div className="p-2.5 rounded-xl bg-[#7A3E48] text-white">
+                    <Presentation className="w-5 h-5" />
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    {data.slide_count || data.deck_structure.slides?.length || 4} SLIDES (16:9)
+                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold bg-rose-50/80 text-[#7A3E48] border border-[#7A3E48]/30">
+                    {data.slide_count || data.deck_structure.slides?.length || 4} SLIDES
                   </span>
                 </div>
 
-                <h4 className="text-base font-bold text-slate-900 font-heading">
+                <h4 className="text-lg font-extrabold text-[#7A3E48] font-heading">
                   Presentation Deck
                 </h4>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Structured briefing slides customized for your chosen audience.
+                <p className="text-xs sm:text-sm text-[#7A3E48]/80 mt-1 leading-relaxed">
+                  Briefing deck with structured slides, metrics, and integrated notes.
                 </p>
               </div>
 
-              <div className="flex items-center space-x-2.5 mt-5 pt-4 border-t border-slate-200">
+              <div className="flex items-center space-x-3 mt-6 pt-4 border-t border-[#7A3E48]/20">
                 <button
                   type="button"
                   onClick={onPreviewSlides}
-                  className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold border border-slate-300 shadow-sm transition-colors"
+                  className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl bg-white hover:bg-rose-50 text-[#7A3E48] text-xs font-bold border border-[#7A3E48] ring-1 ring-inset ring-[#7A3E48]/20 shadow-xs transition-colors"
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  <Eye className="w-3.5 h-3.5 text-[#7A3E48]" />
                   <span>Preview Deck</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleDownloadPptx}
-                  className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl bg-[#7A3E48] hover:bg-[#5E2E36] text-white text-xs font-bold shadow-sm transition-colors"
+                  className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl bg-[#7A3E48] hover:bg-[#5E2E36] text-white text-xs font-bold shadow-xs transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download .pptx</span>
@@ -149,46 +242,45 @@ export const ArtifactResults: React.FC<ArtifactResultsProps> = ({
             </div>
           )}
 
-          {/* PDF Security Advisory Card */}
           {data.advisory_structure && (
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="bg-[#FDF8F8] border-2 border-[#7A3E48]/25 rounded-2xl p-6 flex flex-col justify-between hover:border-[#7A3E48] hover:shadow-md transition-all">
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-rose-100 text-[#7A3E48]">
-                    <FileText className="w-6 h-6" />
+                  <div className="p-2.5 rounded-xl bg-[#7A3E48] text-white">
+                    <FileText className="w-5 h-5" />
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase">
-                    {data.advisory_structure.severity || 'ALERT'}
+                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold bg-rose-50/80 text-[#7A3E48] border border-[#7A3E48]/30">
+                    OFFICIAL PDF
                   </span>
                 </div>
 
-                <h4 className="text-base font-bold text-slate-900 font-heading">
-                  Security Advisory (PDF)
+                <h4 className="text-lg font-extrabold text-[#7A3E48] font-heading">
+                  Policy Advisory PDF
                 </h4>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Clear, easy-to-read advisory format with safety guidelines and action steps.
+                <p className="text-xs sm:text-sm text-[#7A3E48]/80 mt-1 leading-relaxed">
+                  Compliance-ready advisory document formatted for official distribution.
                 </p>
               </div>
 
-              <div className="flex items-center space-x-2.5 mt-5 pt-4 border-t border-slate-200">
+              <div className="flex items-center space-x-3 mt-6 pt-4 border-t border-[#7A3E48]/20">
                 {onPreviewAdvisory && (
                   <button
                     type="button"
                     onClick={onPreviewAdvisory}
-                    className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold border border-slate-300 shadow-sm transition-colors"
+                    className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl bg-white hover:bg-rose-50 text-[#7A3E48] text-xs font-bold border border-[#7A3E48] ring-1 ring-inset ring-[#7A3E48]/20 shadow-xs transition-colors"
                   >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>View Advisory</span>
+                    <Eye className="w-3.5 h-3.5 text-[#7A3E48]" />
+                    <span>Preview PDF</span>
                   </button>
                 )}
 
                 <button
                   type="button"
                   onClick={handleDownloadPdf}
-                  className="flex-1 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold shadow-sm transition-colors"
+                  className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl bg-[#7A3E48] hover:bg-[#5E2E36] text-white text-xs font-bold shadow-xs transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Download .pdf</span>
+                  <span>Download PDF</span>
                 </button>
               </div>
             </div>
@@ -196,108 +288,152 @@ export const ArtifactResults: React.FC<ArtifactResultsProps> = ({
 
         </div>
 
-        {/* Social Media Deliverable Formats Section (Insta, LinkedIn, Twitter) */}
-        {data.social_posts && (
-          <div className="mt-8 pt-6 border-t border-slate-200">
-            <div className="flex items-center space-x-2 mb-4">
-              <Share2 className="w-5 h-5 text-[#7A3E48]" />
-              <h4 className="text-base font-bold text-slate-900 font-heading">
-                Social Media Deliverables
-              </h4>
+        {/* Deliverable: Offline LLM Image Generation (SVG Vector Graphic) */}
+        {data.infographic && (
+          <div className="my-6 p-6 sm:p-7 rounded-2xl bg-[#FDF8F8] border-2 border-[#7A3E48]/25 shadow-xs">
+            <div className="flex items-center justify-between mb-3 pb-3 border-b border-[#7A3E48]/20">
+              <div className="flex items-center space-x-2 text-[#7A3E48] font-extrabold text-sm">
+                <ImageIcon className="w-4 h-4 text-[#7A3E48]" />
+                <span>Vector Graphic & Infographic (SVG)</span>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                {data.infographic.svg_code && (
+                  <button
+                    onClick={handleDownloadSvg}
+                    className="flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-white border border-[#7A3E48] ring-1 ring-inset ring-[#7A3E48]/20 text-xs font-bold text-[#7A3E48] hover:bg-rose-50 transition-colors shadow-xs"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#7A3E48]" />
+                    <span>Download SVG</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
-              {/* Instagram Post */}
-              {data.social_posts.instagram && (
-                <div className="bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200/80 rounded-2xl p-4 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-1.5 text-pink-700 font-bold text-xs">
-                        <Instagram className="w-4 h-4" />
-                        <span>Instagram</span>
-                      </div>
-                      <button
-                        onClick={() => handleCopyText(data.social_posts?.instagram || '', 'insta')}
-                        className="p-1 rounded-md bg-white hover:bg-pink-100 text-pink-700 transition-colors shadow-xs"
-                        title="Copy Instagram Caption"
-                      >
-                        {copiedSocial === 'insta' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                    <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed line-clamp-6 bg-white/70 p-2.5 rounded-xl border border-pink-100">
-                      {data.social_posts.instagram}
-                    </p>
-                  </div>
+            {/* Render SVG Graphic */}
+            {data.infographic.svg_code ? (
+              <div
+                className="w-full rounded-xl overflow-hidden border border-[#7A3E48]/30 bg-slate-950 shadow-inner p-4 flex items-center justify-center"
+                dangerouslySetInnerHTML={{ __html: data.infographic.svg_code }}
+              />
+            ) : (
+              <div className="rounded-xl overflow-hidden border border-[#7A3E48]/30 shadow-xs">
+                <img
+                  src="/infographic_preview.jpg"
+                  alt="Infographic Asset"
+                  className="w-full object-cover max-h-72"
+                />
+              </div>
+            )}
+
+            {/* Diffusion Prompt */}
+            {data.infographic.image_prompt && (
+              <div className="mt-4 p-4 rounded-xl bg-rose-50/70 border border-[#7A3E48]/25">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-extrabold text-[#7A3E48] uppercase flex items-center space-x-1 font-heading">
+                    <Code className="w-3.5 h-3.5" />
+                    <span>Diffusion Image Prompt</span>
+                  </span>
                   <button
-                    onClick={() => handleCopyText(data.social_posts?.instagram || '', 'insta')}
-                    className="mt-3 w-full py-1.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold transition-colors"
+                    onClick={() => handleCopy(data.infographic?.image_prompt || '', 'imgprompt')}
+                    className="text-xs text-[#7A3E48] font-extrabold hover:underline flex items-center space-x-1"
                   >
-                    {copiedSocial === 'insta' ? 'Copied!' : 'Copy Instagram Post'}
+                    {copiedKey === 'imgprompt' ? <Check className="w-3.5 h-3.5 text-emerald-800" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedKey === 'imgprompt' ? 'Copied' : 'Copy Prompt'}</span>
                   </button>
                 </div>
-              )}
+                <p className="text-xs text-[#7A3E48] font-mono bg-white p-3 rounded-lg border border-[#7A3E48]/20 leading-relaxed">
+                  {data.infographic.image_prompt}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
-              {/* LinkedIn Post */}
+        {/* Infographic Metrics Strip */}
+        {data.infographic && data.infographic.metrics && (
+          <div className="my-6 p-6 sm:p-7 rounded-2xl bg-[#FDF8F8] border-2 border-[#7A3E48]/25 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-[#7A3E48]/20 mb-4">
+              <div className="flex items-center space-x-2 text-[#7A3E48]">
+                <BarChart3 className="w-4 h-4 text-[#7A3E48]" />
+                <span className="text-sm font-extrabold font-heading">Key Metrics</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-2">
+              {data.infographic.metrics.map((metric, idx) => (
+                <div key={idx} className="bg-rose-50/80 p-4 rounded-xl border border-[#7A3E48]/25 text-center shadow-xs">
+                  <div className="text-xl sm:text-2xl font-extrabold text-[#7A3E48] font-heading">
+                    {metric.value}
+                  </div>
+                  <div className="text-xs font-bold text-[#7A3E48]/85 mt-1">
+                    {metric.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Social Media Deliverables */}
+        {data.social_posts && (data.social_posts.linkedin || data.social_posts.twitter) && (
+          <div className="mt-6 pt-5 border-t border-[#7A3E48]/20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {data.social_posts.linkedin && (
-                <div className="bg-gradient-to-br from-blue-50 to-sky-50 border border-blue-200/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="bg-[#FDF8F8] border-2 border-[#7A3E48]/25 rounded-2xl p-5 sm:p-6 flex flex-col justify-between shadow-xs">
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-1.5 text-blue-800 font-bold text-xs">
-                        <Linkedin className="w-4 h-4" />
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#7A3E48]/20">
+                      <div className="flex items-center space-x-1.5 text-blue-950 font-extrabold text-xs">
+                        <Linkedin className="w-4 h-4 text-blue-800" />
                         <span>LinkedIn</span>
                       </div>
                       <button
-                        onClick={() => handleCopyText(data.social_posts?.linkedin || '', 'linkedin')}
-                        className="p-1 rounded-md bg-white hover:bg-blue-100 text-blue-800 transition-colors shadow-xs"
-                        title="Copy LinkedIn Post"
+                        onClick={() => handleCopy(data.social_posts?.linkedin || '', 'linkedin')}
+                        className="p-1.5 rounded-lg bg-white hover:bg-rose-50 text-blue-950 transition-colors border border-[#7A3E48]/30 ring-1 ring-inset ring-[#7A3E48]/15"
                       >
-                        {copiedSocial === 'linkedin' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedKey === 'linkedin' ? <Check className="w-3.5 h-3.5 text-emerald-800" /> : <Copy className="w-3.5 h-3.5 text-[#7A3E48]" />}
                       </button>
                     </div>
-                    <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed line-clamp-6 bg-white/70 p-2.5 rounded-xl border border-blue-100">
+                    <p className="text-xs sm:text-sm text-[#7A3E48] whitespace-pre-wrap leading-relaxed line-clamp-6 bg-white p-3.5 rounded-xl border border-[#7A3E48]/20 font-sans">
                       {data.social_posts.linkedin}
                     </p>
                   </div>
                   <button
-                    onClick={() => handleCopyText(data.social_posts?.linkedin || '', 'linkedin')}
-                    className="mt-3 w-full py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition-colors"
+                    onClick={() => handleCopy(data.social_posts?.linkedin || '', 'linkedin')}
+                    className="mt-4 w-full py-2.5 rounded-xl bg-[#7A3E48] hover:bg-[#5E2E36] text-white text-xs font-bold transition-colors shadow-xs"
                   >
-                    {copiedSocial === 'linkedin' ? 'Copied!' : 'Copy LinkedIn Post'}
+                    {copiedKey === 'linkedin' ? 'Copied' : 'Copy Post'}
                   </button>
                 </div>
               )}
 
-              {/* Twitter / X Post */}
               {data.social_posts.twitter && (
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-300/80 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="bg-[#FDF8F8] border-2 border-[#7A3E48]/25 rounded-2xl p-5 sm:p-6 flex flex-col justify-between shadow-xs">
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-1.5 text-slate-900 font-bold text-xs">
-                        <Twitter className="w-4 h-4" />
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#7A3E48]/20">
+                      <div className="flex items-center space-x-1.5 text-[#7A3E48] font-extrabold text-xs">
+                        <Twitter className="w-4 h-4 text-[#7A3E48]" />
                         <span>Twitter / X</span>
                       </div>
                       <button
-                        onClick={() => handleCopyText(data.social_posts?.twitter || '', 'twitter')}
-                        className="p-1 rounded-md bg-white hover:bg-slate-200 text-slate-900 transition-colors shadow-xs"
-                        title="Copy Twitter Post"
+                        onClick={() => handleCopy(data.social_posts?.twitter || '', 'twitter')}
+                        className="p-1.5 rounded-lg bg-white hover:bg-rose-50 text-[#7A3E48] transition-colors border border-[#7A3E48]/30 ring-1 ring-inset ring-[#7A3E48]/15"
                       >
-                        {copiedSocial === 'twitter' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedKey === 'twitter' ? <Check className="w-3.5 h-3.5 text-emerald-800" /> : <Copy className="w-3.5 h-3.5 text-[#7A3E48]" />}
                       </button>
                     </div>
-                    <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed line-clamp-6 bg-white/70 p-2.5 rounded-xl border border-slate-200">
+                    <p className="text-xs sm:text-sm text-[#7A3E48] whitespace-pre-wrap leading-relaxed line-clamp-6 bg-white p-3.5 rounded-xl border border-[#7A3E48]/20 font-sans">
                       {data.social_posts.twitter}
                     </p>
                   </div>
                   <button
-                    onClick={() => handleCopyText(data.social_posts?.twitter || '', 'twitter')}
-                    className="mt-3 w-full py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors"
+                    onClick={() => handleCopy(data.social_posts?.twitter || '', 'twitter')}
+                    className="mt-4 w-full py-2.5 rounded-xl bg-[#7A3E48] hover:bg-[#5E2E36] text-white text-xs font-bold transition-colors shadow-xs"
                   >
-                    {copiedSocial === 'twitter' ? 'Copied!' : 'Copy Twitter / X Post'}
+                    {copiedKey === 'twitter' ? 'Copied' : 'Copy Thread'}
                   </button>
                 </div>
               )}
-
             </div>
           </div>
         )}
@@ -306,4 +442,3 @@ export const ArtifactResults: React.FC<ArtifactResultsProps> = ({
     </motion.section>
   );
 };
-

@@ -8,31 +8,37 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        background: "#FCE4E4",
+        foreground: "#2A171D",
+        primary: {
+          DEFAULT: "#5E2E36",
+          foreground: "#ffffff",
+        },
         chitra: {
-          burgundy: "#7A3E48",
-          burgundyDark: "#5E2E36",
-          rosewood: "#8B4752",
-          cardBg: "#C69A9E",
-          cardBgDark: "#A87C80",
-          canvas: "#FEEAEA",
-          accentRose: "#F8D7DA",
-          darkSlate: "#1E293B",
-          badgeRed: "#DC2626",
-          badgeRedHover: "#B91C1C",
+          canvas: "#FCE4E4",
+          canvasSoft: "#F8D7DA",
+          dustyRose: "#BD8587",
+          dustyRoseDark: "#B0797B",
+          dustyRoseLight: "#C99496",
+          cardBg: "#BD8587",
+          innerField: "#FCE4E4",
+          burgundy: "#5E2E36",
+          burgundyDark: "#4A2228",
+          rosewood: "#7D4448",
+          darkText: "#2A171D",
         }
       },
       boxShadow: {
-        'figma-card': '0 12px 32px rgba(94, 46, 54, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08)',
-        'figma-btn': '0 8px 24px rgba(122, 62, 72, 0.35)',
-        'figma-inner': 'inset 0 2px 4px rgba(0,0,0,0.06)'
+        'figma-card': '0 14px 36px rgba(94, 46, 54, 0.25), 0 4px 14px rgba(0, 0, 0, 0.1)',
+        'figma-btn': '0 8px 24px rgba(94, 46, 54, 0.35)',
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Manrope', 'Geist', 'system-ui', 'sans-serif'],
+        heading: ['Poppins', 'Geist', 'sans-serif'],
+        geist: ['Geist', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
+        fraunces: ['Fraunces', 'serif'],
       },
-      animation: {
-        'pulse-subtle': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'glow-spin': 'spin 8s linear infinite',
-      }
     },
   },
   plugins: [],

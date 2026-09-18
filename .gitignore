@@ -28,3 +28,7 @@ nitrous_artifacts/
 *.swp
 .idea/
 .vscode/
+*.tsbuildinfo
+.~lock.*#
+~$*
+

@@ -5,28 +5,33 @@
 - **Styling:** Tailwind CSS + Custom Design System Tokens
 - **Icons:** Lucide React (`lucide-react`)
 - **Physics & Motion:** Framer Motion (`framer-motion`)
+- **UI Primitives:** Radix UI (`radix-ui`) with custom components (`/components/ui/progress.tsx`)
 
 ## 2. Visual Design & Theme Tokens
 - **Canvas Background:** `#FEEAEA` (soft pastel rose)
-- **Header Banner:** `#7A3E48` (deep burgundy/rosewood with subtle drop shadow)
-- **Upload Button:** Gradient `#8B4752` to `#6A323B` with border `#FEEAEA` and spring elevation
-- **Unfolded Container Card:** `#C69A9E` (rose-mauve) with backdrop blur and white border
-- **Document Icons:** Clean white/slate sheets with folded corner and prominent `#E02424` red PDF badge
+- **Header Banner:** `#7A3E48` (deep rosewood with clean drop shadow)
+- **Primary Action Buttons & Indicators:** Deep burgundy `#5E2E36`
+- **Default Window Containers:** `#FFDEDE` with `#5E2E36` (2px solid, `rounded-3xl`, soft shadows)
+- **Inner Windows & Controls:** Same `#FFDEDE` background separated cleanly with `#5E2E36` outlines
+- **Progress Track:** Soft rose `#E8B8BE` with sleek, stroke-free `#5E2E36` indicator
+- **Typography:** Geist, Manrope, Poppins, Fraunces fonts with black / dark charcoal headings (`#020617` / `#0F172A`)
 
 ## 3. Component Architecture
-- `Header.tsx`: Clean top bar with centered "CHITRA" title and Info button trigger.
+- `Header.tsx`: Clean top bar with centered "CHITRA" title and Info button modal trigger.
 - `UploadHero.tsx`:
-  - Centered circular `+` button that toggles open/closed on click.
-  - "Proceed" primary action button with active processing spinner.
-  - Responsive dropzone for PDF, DOCX, and TXT files.
-- `DocumentGrid.tsx`: Document cards with custom upload empty state prompt, selection indicators, and remove options.
-- `ConfigDrawer.tsx`: Parameters drawer with updated Target Audiences (`Common Public`, `Educated People`, `Kids`, `GenZ`) and Deliverable Formats (`All Formats`, `Social Text`, `Slide Deck (.pptx)`, `Advisory (.pdf)`).
-- `PipelineTracker.tsx`: Clean "Execution" tracker displaying the 4 core tiers (`Reading Room`, `Factory Floor`, `The Brain`, `Printing Press`) without clutter.
-- `ArtifactResults.tsx`: Result display with 1-click social media copy buttons (Instagram, LinkedIn, Twitter/X), presentation deck actions, and reliable PDF/PPTX downloaders.
-- `SlideViewerModal.tsx`: 16:9 widescreen in-browser PowerPoint deck carousel with bullet points and key metrics.
-- `AdvisoryViewerModal.tsx`: Simplified, friendly security advisory preview for everyday users with direct PDF download.
-- `InfoModal.tsx`: Header `CHITRA (Team NiTRO+)`, Body `AMRATANSH`, and Footer `CHITRA - BY TEAM NiTRO+`.
-- `downloadHelper.ts`: Universal download utility resolving backend API endpoints and fallback document exports.
+  - Standard aligned width (`max-w-5xl mx-auto`) with proportional height.
+  - Centered circular `+` button that toggles open/close on click.
+  - Symmetrical mode selection (`Upload Documents` vs `Text Prompt`).
+  - Minimal file upload button, parameter drawer trigger, and "Proceed" button.
+- `DocumentGrid.tsx`: Minimal empty state displaying only the upload logo and "Upload a file". Outlined `#FFDEDE` document cards.
+- `PipelineTracker.tsx`:
+  - `#FFDEDE` window frame with borderless, stroke-free progress bar.
+  - Clean text without extra logo next to "Executing Synthesis".
+  - Instant cancel button stopping processing immediately and aborting active requests.
+- `framer-normal-carousel.tsx`: Generated deliverables carousel in `#FFDEDE` frame with generous vertical proportions and auto-scroll trigger.
+- `ArtifactResults.tsx`: Detailed deliverable cards (Executive Summary, Presentation Deck, Policy PDF Advisory, SVG Vector Graphic, Social Media text) matching the unified `#FFDEDE` / `#5E2E36` theme.
+- `ConfigDrawer.tsx`: Parameters drawer for Target Audience, Tone, and Deliverable Formats.
+- `InfoModal.tsx`: Header `CHITRA (Team NiTRO+)`, Body `AMRATANSH`, Footer `CHITRA - BY TEAM NiTRO+`.
 
 ## 4. How to Run Frontend Locally
 ```bash
@@ -35,4 +40,3 @@ npm install
 npm run dev
 ```
 Runs at `http://localhost:3000`.
-
